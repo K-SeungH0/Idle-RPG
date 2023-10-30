@@ -7,7 +7,7 @@ using Newtonsoft.Json;
 
 public class SnapShot
 {
-    public const string LocalSnapDataKey = "Local_Snap_Data";
+    public const string LocalSnapDataKey = "Local_SnapShot_Data";
 
     [Serializable]
     public struct SnapShotData
@@ -37,6 +37,8 @@ public class SnapShot
         public Dictionary<enEquipType, EquipmentSystem.EquipmentInfo> CurrentEquipments;
         /// <summary> 현재 스테이지 ID </summary>
         public int StageID;
+        /// <summary> 드랍십 정보 </summary>
+        public DropShipInfo DropShipInfo;
     }
     [Serializable]
     public struct GemData
@@ -62,7 +64,7 @@ public class SnapShot
         public DateTime ServerTime;
 
         /// <summary> 플레이어 스탯 레벨 </summary>
-        public Dictionary<ActorEnum.enPlayerStats, int> PlayerStatsLevel;
+        public Dictionary<enStatusElement, int> PlayerStatsLevel;
         //public PlayerStats PlayerStats;
         /// <summary> 장비 레벨 </summary>
         public Dictionary<enEquipType, Dictionary<int, ItemDataManager.ItemData>> EquipmentLevels;
@@ -70,6 +72,8 @@ public class SnapShot
         public Dictionary<enEquipType, EquipmentSystem.EquipmentInfo> CurrentEquipments;
         /// <summary> 현재 스테이지 ID </summary>
         public int StageID;
+        /// <summary> 드랍십 정보 </summary>
+        public DropShipInfo DropShipInfo;
     }
 
     public struct GemDB
@@ -92,11 +96,11 @@ public class SnapShot
         get { return _localSnapData; }
         //set { _localSnapData = value; }
     }
-    public static async UniTaskVoid SaveAsync()
+    public static async UniTaskVoid SaveAsync(System.Threading.CancellationToken token)
     {
         while (true)
         {
-            await UniTask.Delay(TimeSpan.FromSeconds(60));
+            await UniTask.Delay(TimeSpan.FromSeconds(60), cancellationToken: token);
             //SaveSnapShot();
             SaveLocal();
         }
@@ -187,11 +191,23 @@ public class SnapShot
             // 해당 계정이 처음 시작했을때 여기로 들어온다.
             var defalutWeapon = new Dictionary<int, ItemDataManager.ItemData>
             {
-                { 10001, new ItemDataManager.ItemData() { nLevel = 1, nCount = 1 } }
+                { 10001, new ItemDataManager.ItemData() { nLevel = 1, nCount = 1 } },
+                { 10002, new ItemDataManager.ItemData() { nLevel = 1, nCount = 1 } },
+                { 10003, new ItemDataManager.ItemData() { nLevel = 1, nCount = 1 } },
+                { 10004, new ItemDataManager.ItemData() { nLevel = 1, nCount = 1 } },
+                { 10005, new ItemDataManager.ItemData() { nLevel = 1, nCount = 1 } },
+                { 10006, new ItemDataManager.ItemData() { nLevel = 1, nCount = 1 } },
+                { 10007, new ItemDataManager.ItemData() { nLevel = 1, nCount = 1 } }
             };
             var defalutArmor = new Dictionary<int, ItemDataManager.ItemData>
             {
-                { 20001, new ItemDataManager.ItemData() { nLevel = 1, nCount = 1 } }
+                { 20001, new ItemDataManager.ItemData() { nLevel = 1, nCount = 1 } },
+                { 20002, new ItemDataManager.ItemData() { nLevel = 1, nCount = 1 } },
+                { 20003, new ItemDataManager.ItemData() { nLevel = 1, nCount = 1 } },
+                { 20004, new ItemDataManager.ItemData() { nLevel = 1, nCount = 1 } },
+                { 20005, new ItemDataManager.ItemData() { nLevel = 1, nCount = 1 } },
+                { 20006, new ItemDataManager.ItemData() { nLevel = 1, nCount = 1 } },
+                { 20007, new ItemDataManager.ItemData() { nLevel = 1, nCount = 1 } }
             };
 
             _localSnapData.EquipmentLevels = new Dictionary<enEquipType, Dictionary<int, ItemDataManager.ItemData>>
@@ -223,7 +239,7 @@ public class SnapShot
         GameManager.Instance.GetPlayer().GainGem(_localSnapData.Gem);
 
         if(_localSnapData.PlayerStatsLevel != null)
-            GameManager.Instance.GetAbilityManager().SetPlayerStatsLevel(_localSnapData.PlayerStatsLevel);
+            GameManager.Instance.GetAbilityManager().SetPlayerStatsLevel(_localSnapData.PlayerStatsLevel, true);
     }
     #endregion
 

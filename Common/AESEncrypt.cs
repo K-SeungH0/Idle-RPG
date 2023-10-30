@@ -9,7 +9,7 @@ public class AESEncrypt
     protected SHA256Managed sha256Managed = new SHA256Managed();
 
     protected RijndaelManaged aes = new RijndaelManaged();
-    protected static readonly string _privateKey = "PRIVATEKEY";
+    protected static readonly string _privateKey = "R[=n#m!*h@~";
 
     public AESEncrypt()
     {

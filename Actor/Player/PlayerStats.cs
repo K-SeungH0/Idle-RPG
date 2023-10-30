@@ -25,6 +25,11 @@ public class PlayerStats : ActorStats
 	/// <summary> 경험치 </summary>
 	public BigInteger BExp;
 
+	// 임시 데이터
+	public int Atk;
+	public int HP;
+	public int HPRecovery;
+
 	/// <summary> 스탯 강화로 올라가는 공격력 </summary>
 	public BigInteger BStatsAtk;
 	/// <summary> 스탯 강화로 올라가는 공격속도 </summary>
@@ -41,4 +46,29 @@ public class PlayerStats : ActorStats
     public float fStatsCritRate;
 	/// <summary> 스탯 강화로 올라가는 치명타 피해 </summary>
     public BigInteger BStatsCritDmg;
+
+	public BigInteger GetDamage()
+	{
+		BigInteger result = BAtk + BStatsAtk;
+		return result;
+	}
+	public BigInteger GetCritDamage()
+	{
+        BigInteger result = BAtk + BStatsAtk;
+        if ((BCritDmg + BStatsCritDmg) / 100 < 10000)
+        {
+            var dmg = (float)(BCritDmg + BStatsCritDmg) / 100f;
+            var plusDmg = (float)result * dmg;
+            result = (int)plusDmg;
+        }
+        else
+            result = result * (BCritDmg + BStatsCritDmg) / 100;
+
+		UnityEngine.Debug.Log("치명타 성공!! Damage : " + result.ToString());
+        return result;
+    }
+    public bool IsCrit()
+	{
+		return Util.CommonUtil.GetPercentageChance(fCrit);
+    }
 }

@@ -8,6 +8,22 @@ namespace Util
 
         public const int STAT_PERCENT = 100;
 
+        public const int FIRST_STAGE = 10001;
+        public static readonly string[] UnitGradeColor = new string[] { "#DFE1D1", "#37C3E7", "#37BB56", "#BF3EC5", "#DE8134" };
+
+        public static readonly int[] TestUnit = new int[] { 10001, 10005, 10009, 10010, 10014, 10016 };
+
+        public static Color ColorUnitGrade(UnitGrade grade)
+        {
+            
+            if ((int)grade - 1 > UnitGradeColor.Length)
+            {
+                LogManager.Instance.PrintLog(LogManager.enLogType.Error, "Grade Error!");
+                return Color.clear;
+            }
+
+            return ColorHexToRGBA(UnitGradeColor[(int)grade - 1]);
+        }
         public static Color ColorHexToRGBA(string hexColor, string alpha = "FF")
         {
             if (hexColor[0] != '#')
@@ -81,6 +97,24 @@ namespace Util
             unityString = CurrencyUnits[quotient];
 
             return string.Format("{0}{1}{2}", significant, showNumber, unityString);
+        }
+
+        /// <summary>
+        /// 확률 계산
+        /// </summary>
+        /// <returns> 성공 여부 </returns>
+        public static bool GetPercentageChance(float value)
+        {
+            int randomValue = Random.Range(0, 101);
+
+            if (randomValue <= value)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
         }
     }
 }

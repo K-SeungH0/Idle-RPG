@@ -59,25 +59,21 @@ public class EnemyStateWalk : EnemyState
 
 	public override void LateUpdate()
 	{
-		//if (param.transform.position.x <= -1)
-		//{
-		//	param.SwitchState(ActorEnum.State.Attack);
-		//	return;
-		//}
+		if (_player == null)
+		{
+			param.ReturnToPool();
+            return; 
+		}
 
-		if(Vector3.Distance(_player.transform.position, param.transform.position) < param.GetEnemyRange() || param.transform.position.x <= -1)
+		if (_player == null)
+			return;
+
+		if(Vector3.Distance(_player.transform.position, param.transform.position) < param.GetEnemyRange() || _player.transform.position.x + 1 >= param.transform.position.x)
 		{
 			param.SwitchState(ActorEnum.State.Attack);
 			return;
 		}
 			
-
-		//if (param.transform.position.x - _player.transform.position.x <= 1.5f)
-		//{
-		//	param.SwitchState(ActorEnum.State.Idle);
-		//	return;
-		//}
-
 		
 
 		float moveSpeed = param.GetMoveSpeed();
@@ -132,8 +128,6 @@ public class EnemyStateAttack : EnemyState
 	private void OnEndAnimation()
 	{
 		param.SwitchState(ActorEnum.State.Idle);
-
-		GameManager.Instance.GetPlayer().PlayAnimation("Hit", null);
 	}
 	private void OnFireAnimation()
 	{

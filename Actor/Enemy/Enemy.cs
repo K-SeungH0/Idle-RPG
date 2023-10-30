@@ -1,9 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Numerics;
-using System.Runtime.InteropServices;
 using UnityEngine;
-using static UnityEngine.GraphicsBuffer;
 
 public abstract class Enemy : MonoBehaviour, IActor
 {
@@ -13,7 +11,9 @@ public abstract class Enemy : MonoBehaviour, IActor
 	[Header("Animation")]
 	[SerializeField]
 	private Animator _animator;
-
+	[Header("Projectile")]
+	[SerializeField]
+	PoolEnums.PoolProjectileId _poolProjectileId;
 
 	[Header("Target VFX Node")]
 	///<summary> 발사체 나가는 노드 </summary>
@@ -22,6 +22,9 @@ public abstract class Enemy : MonoBehaviour, IActor
 	/// <summary> 타격 맞는 노드 </summary>
 	[SerializeField]
 	protected Transform _trHitNode;
+	/// <summary> 데미지 표시 되는 노드 </summary>
+	[SerializeField] 
+	private Transform _trDamageText;
 
 	[SerializeField]
 	protected AnimationHelper _animationHelper;
@@ -41,7 +44,7 @@ public abstract class Enemy : MonoBehaviour, IActor
 	protected BigInteger _bCurrentHp;
 	protected int _level = 1;
 	[SerializeField]
-	protected int _fRange = 8;
+	protected int _fRange;
 
 	// =============================== Enemy Animation 관련 ===============================
 	protected bool _isInit;
@@ -71,15 +74,14 @@ public abstract class Enemy : MonoBehaviour, IActor
 
 	#region InterFaceRegion
 
-	public virtual void Init()
+	public virtual void Init(bool isMainUnit = false)
 	{
 		if (_isInit == false)
 		{
 			transform = this.gameObject.transform;
 			_isInit = true;
 			_fEndpointPosX = GameManager.Instance.GetEnemyEndPoint().position.x;
-			
-		}
+        }
 	}
 	public void InitState()
 	{
@@ -129,7 +131,8 @@ public abstract class Enemy : MonoBehaviour, IActor
 
 		_fRange = _skillEffectDataTable.GetData(first).att_range;
 
-		InitAttackMachine(0, 0, (1 / (float)_monsterStat.AtkSpeed));
+		//InitAttackMachine(0, 0, (1 / (float)_monsterStat.AtkSpeed));
+		InitAttackMachine(0, 0, 1);
 		SetMoveSpeed(_monsterStat.MoveSpeed);
 	}
 	public void Enable()
@@ -139,10 +142,10 @@ public abstract class Enemy : MonoBehaviour, IActor
 		InitHpBar();
 		transform.gameObject.SetActive(true);
 
-		if(_isInitState == true)
-			_enemyState.ChangeState<EnemyStateWalk>();
+		if (_isInitState == true)
+			SwitchState(ActorEnum.State.Walk);
 	}
-	public void PlayAnimation(string animation_name, System.Action OnCompleted, bool is_check_end_animation = false)
+	public virtual void PlayAnimation(string animation_name, System.Action OnCompleted, bool is_check_end_animation = false)
 	{
 		if (!this.gameObject.activeInHierarchy)
 			return; 
@@ -175,17 +178,16 @@ public abstract class Enemy : MonoBehaviour, IActor
 	}
 	private void SkillStart(int skillId)
 	{
-		//LogManager.Instance.PrintLog(LogManager.enLogType.Normal, "Skill ID : " + skillId, LogManager.LogColor.Blue);
-		if(skillId != 0)
+		if(skillId == 0)
 		{
 			SwitchState(ActorEnum.State.Attack);
 
 
 			var data = _skillInfoDataTable.GetData(_monsterData.atk_skill, _level);
-			if(_skillEffectDataTable.GetData(data.skillEffectID1).att_range > 0)
+			if (_skillEffectDataTable.GetData(data.skillEffectID1).att_range > 1)
 			{
 				//원거리 공격(Projectile)
-				var projectile = PoolProjectileExtension.GetPool(PoolEnums.PoolProjectileId.Bullet_01_01);
+				var projectile = PoolProjectileExtension.GetPool(_poolProjectileId);
 				if (projectile != null)
 				{
 					ProjectileStats projectileStat = new ProjectileStats();
@@ -193,9 +195,13 @@ public abstract class Enemy : MonoBehaviour, IActor
 					projectileStat.Target = GameManager.Instance.GetPlayerTransform();
 					projectileStat.Start = _trAttackNode;
 					projectileStat.Speed = 4.0f;
-					projectileStat.Damage = 5;
+					projectileStat.Damage = _monsterStat.Atk;
 					projectileStat.DamageTargetType = ProjectileStats.enDamageTarget.Player;
 					projectile.gameObject.GetComponent<ParabolicProjectile>().SetProjectile(projectileStat);
+				}
+				else
+				{
+					_player.TakeDamage(_monsterStat.Atk);
 				}
 			}
 			else
@@ -204,22 +210,28 @@ public abstract class Enemy : MonoBehaviour, IActor
 				_player.TakeDamage(_monsterStat.Atk);
 			}
 		}
-		else
-		{
-			//원거리 공격(Projectile)
-			var projectile = PoolProjectileExtension.GetPool(PoolEnums.PoolProjectileId.Bullet_01_01);
-			if (projectile != null)
-			{
-				ProjectileStats projectileStat = new ProjectileStats();
-				projectileStat.ElapsedTime = 0f;
-				projectileStat.Target = GameManager.Instance.GetPlayerTransform();
-				projectileStat.Start = _trAttackNode;
-				projectileStat.Speed = 4.0f;
-				projectileStat.Damage = 5;
-				projectileStat.DamageTargetType = ProjectileStats.enDamageTarget.Player;
-				projectile.gameObject.GetComponent<ParabolicProjectile>().SetProjectile(projectileStat);
-			}
-		}
+		
+		////LogManager.Instance.PrintLog(LogManager.enLogType.Normal, "Skill ID : " + skillId, LogManager.LogColor.Blue);
+		//if (skillId != 0)
+		//{
+			
+		//}
+		//else
+		//{
+		//	//원거리 공격(Projectile)
+		//	var projectile = PoolProjectileExtension.GetPool(PoolEnums.PoolProjectileId.Bullet_01_01);
+		//	if (projectile != null)
+		//	{
+		//		ProjectileStats projectileStat = new ProjectileStats();
+		//		projectileStat.ElapsedTime = 0f;
+		//		projectileStat.Target = GameManager.Instance.GetPlayerTransform();
+		//		projectileStat.Start = _trAttackNode;
+		//		projectileStat.Speed = 4.0f;
+		//		projectileStat.Damage = _monsterStat.Atk;
+		//		projectileStat.DamageTargetType = ProjectileStats.enDamageTarget.Player;
+		//		projectile.gameObject.GetComponent<ParabolicProjectile>().SetProjectile(projectileStat);
+		//	}
+		//}
 
 	}
 	public void SetTargetPlayer(Player player)
@@ -241,24 +253,31 @@ public abstract class Enemy : MonoBehaviour, IActor
 				if (distance < range || transform.position.x <= _fEndpointPosX)
 				{
 					_atkMachineUsecase.SetTarget(_player.transform);
+					_atkMachineUsecase.Update();
 				}
 
-				_atkMachineUsecase.Update();
+
 			}
 		}
 
 	}
 	private void Update()
 	{
-		
+		if (_enCurrentState != ActorEnum.State.Die)
+		{
+			if (GameManager.Instance.GetIsPlayerSpawned() == true)
+				FindTarget(GameManager.Instance.GetPlayerTransform(), _fRange);
+		}
+		if (GameManager.Instance.GetPlayer() == null)
+			return; 
+
 		if (GameManager.Instance.GetIsPlayerSpawned() == true)
-			FindTarget(GameManager.Instance.GetPlayerTransform(), _fRange);
-		
+			FindTarget(GameManager.Instance.GetPlayerTransform(), _fRange);		
 	}
 
 	private void LateUpdate()
 	{
-		if (_enemyState != null && _isInitState)
+		if (_enemyState != null && _isInitState && _enCurrentState != ActorEnum.State.Die)
 			_enemyState.LateUpdate();
 	}
 	public virtual void ReturnToPool()
@@ -282,6 +301,10 @@ public abstract class Enemy : MonoBehaviour, IActor
 	{
 		return transform;
 	}
+	public GameObject GetGameObject()
+	{
+		return gameObject;
+	}
 	public float GetMoveSpeed()
 	{
 		return _fMoveSpeed;
@@ -298,10 +321,10 @@ public abstract class Enemy : MonoBehaviour, IActor
 		_hpView.DoFill(1, false);
 		_hpView.Disable();
 	}
-
 	public void SwitchState(ActorEnum.State state)
 	{
-		switch (state)
+		_enCurrentState = state;
+        switch (state)
 		{
 			case ActorEnum.State.Idle:
 				_enemyState.ChangeState<EnemyStateIdle>();
@@ -318,10 +341,15 @@ public abstract class Enemy : MonoBehaviour, IActor
 		}
 	}
 
-	public void TakeDamage(BigInteger damage)
+	public void TakeDamage(BigInteger damage, PoolEnums.PoolFloatingDamageId type = PoolEnums.PoolFloatingDamageId.NormalDmg)
 	{
 		if(transform != null)
 		{
+			if (_enCurrentState != ActorEnum.State.Die)
+			{
+				var floatingDmg = PoolFloatingDamageExtension.GetPool(type);
+				floatingDmg.GetComponent<FloatingDamage>().SetDamage(damage, _trDamageText);
+			}
 			_bCurrentHp -= damage;
 
 			if (_bCurrentHp <= 0)
@@ -345,6 +373,8 @@ public abstract class Enemy : MonoBehaviour, IActor
 		prefabFx.position = GetEnemyHitNode().position;
 
 		prefabFx.gameObject.SetActive(true);
+
+		DropCoinManager.Instance.CreateCoin(transform.position);
 	}
 	public void Disable()
 	{
@@ -378,5 +408,10 @@ public abstract class Enemy : MonoBehaviour, IActor
 	{
 		return _animationHelper;
 	}
-	#endregion
+
+    public void NormalAttack()
+    {
+        throw new System.NotImplementedException();
+    }
+    #endregion
 }

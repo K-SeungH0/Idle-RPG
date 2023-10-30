@@ -80,7 +80,11 @@ public class EquipmentSystemUsecase : IEquipmentSystemUsecase
             if (equipItem != null)
             {
                 var stat = AppManager.Instance.GetDataTableManager().GetStatGroupDataTable().GetDataByLevel(equipment.stat_group, equipItem.Value.nLevel);
-                //GameManager.Instance.GetPlayer().GetPlayerStats().BAtk += stat.stat_value;
+
+                if(stat.stat_type == 1)
+                    GameManager.Instance.GetPlayer().GetPlayerStats().BAtk += stat.stat_value;
+                else if(stat.stat_type == 9)
+                    GameManager.Instance.GetPlayer().GetPlayerStats().BHp += stat.stat_value;
             }
             else
                 LogManager.Instance.PrintLog(LogManager.enLogType.Error, "보유 하고 있지 않은 장비를 장착함!!!");
@@ -105,7 +109,11 @@ public class EquipmentSystemUsecase : IEquipmentSystemUsecase
                     if (equipItem != null)
                     {
                         var stat = AppManager.Instance.GetDataTableManager().GetStatGroupDataTable().GetDataByLevel(equipment.stat_group, equipItem.Value.nLevel);
-                        GameManager.Instance.GetPlayer().GetPlayerStats().BAtk -= stat.stat_value;
+
+                        if (stat.stat_type == 1)
+                            GameManager.Instance.GetPlayer().GetPlayerStats().BAtk -= stat.stat_value;
+                        else if (stat.stat_type == 9)
+                            GameManager.Instance.GetPlayer().GetPlayerStats().BHp -= stat.stat_value;
                     }
                     else
                         LogManager.Instance.PrintLog(LogManager.enLogType.Error, "보유 하고 있지 않은 장비를 해제함!!!");
